@@ -1,0 +1,35 @@
+name: 每日天气推送
+
+on:
+  schedule:
+    - cron: '30 23 * * *'
+  workflow_dispatch:
+
+jobs:
+  weather:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+      
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      
+      - name: 安装依赖
+        run: pip install requests
+      
+      - name: 运行天气脚本
+        env:
+          CAIYUN_TOKEN: ${{ secrets.CAIYUN_TOKEN }}
+          DEEPSEEK_KEY: ${{ secrets.DEEPSEEK_KEY }}
+        run: python weather_push.py
+      
+      - name: 保存天气数据到仓库
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "bot@example.com"
+          git add latest_weather.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "更新天气数据 $(date '+%Y-%m-%d %H:%M')" && git pull --rebase && git push)
